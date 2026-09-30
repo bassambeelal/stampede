@@ -16,12 +16,17 @@ export function fmtMs(ms: number): string {
   return s ? `${m}m ${s}s` : `${m}m`
 }
 
-/** 27x, 1.03x, 81x. Two decimals below 10, whole numbers above 100. */
+/** 27×, 1.03×, 81×. Two decimals below 10, whole numbers above 100. */
 export function fmtX(n: number): string {
-  if (!Number.isFinite(n)) return '∞x'
-  if (n >= 100) return `${Math.round(n)}x`
-  if (n >= 10) return `${Number(n.toFixed(1))}x`
-  return `${Number(n.toFixed(2))}x`
+  return `${fmtXNumber(n)}×`
+}
+
+/** The number part of `fmtX`, for layouts that set the sign separately. */
+export function fmtXNumber(n: number): string {
+  if (!Number.isFinite(n)) return '∞'
+  if (n >= 100) return String(Math.round(n))
+  if (n >= 10) return String(Number(n.toFixed(1)))
+  return String(Number(n.toFixed(2)))
 }
 
 export function fmtPct(ratio: number, digits = 1): string {

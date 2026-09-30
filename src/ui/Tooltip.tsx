@@ -1,87 +1,97 @@
 import {
-  cloneElement,
   useCallback,
   useId,
   useLayoutEffect,
   useRef,
   useState,
+  type FocusEvent,
+  type KeyboardEvent,
+  type PointerEvent,
   type ReactElement,
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
 
+/** Props the trigger must spread onto its focusable element. */
+export interface TooltipTriggerProps {
+  'aria-describedby': string | undefined
+  onPointerEnter: (e: PointerEvent<HTMLElement>) => void
+  onPointerLeave: () => void
+  onFocus: (e: FocusEvent<HTMLElement>) => void
+  onBlur: () => void
+  onKeyDown: (e: KeyboardEvent<HTMLElement>) => void
+}
+
 export interface TooltipProps {
   content: ReactNode
-  /** A single focusable element. Receives `aria-describedby` and the handlers. */
-  children: ReactElement<Record<string, unknown>>
+  /**
+   * Renders the trigger. Taking props explicitly, rather than cloning a child,
+   * keeps the wiring visible at the call site and puts `aria-describedby` on
+   * the element that actually receives focus.
+   */
+  children: (trigger: TooltipTriggerProps) => ReactElement
   side?: 'top' | 'bottom'
   /** Max width in px. Long explanations need room; short labels should not get it. */
   width?: number
 }
 
 const GAP = 8
+const OFFSCREEN = { top: -9999, left: -9999 }
 
 /**
  * Hover/focus tooltip rendered into a portal so it is never clipped by a
  * scroll container, and flipped to the other side when it would leave the
  * viewport. Opens on focus as well as hover so it is reachable by keyboard.
+ *
+ * The anchor is taken from the event that opened the tooltip, so no ref has to
+ * be threaded through the trigger.
  */
-export function Tooltip({
-  content,
-  children,
-  side = 'top',
-  width = 260,
-}: TooltipProps) {
+export function Tooltip({ content, children, side = 'top', width = 260 }: TooltipProps) {
   const id = useId()
-  const anchor = useRef<HTMLElement | null>(null)
   const bubble = useRef<HTMLDivElement | null>(null)
-  const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState<{ top: number; left: number; flipped: boolean }>(
-    { top: 0, left: 0, flipped: false },
-  )
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null)
+  const [pos, setPos] = useState(OFFSCREEN)
 
   const place = useCallback(() => {
-    const a = anchor.current?.getBoundingClientRect()
+    const a = anchor?.getBoundingClientRect()
     const b = bubble.current?.getBoundingClientRect()
     if (!a || !b) return
 
-    const wantsTop = side === 'top'
     const roomAbove = a.top - b.height - GAP > 4
     const roomBelow = a.bottom + b.height + GAP < window.innerHeight - 4
-    const onTop = wantsTop ? roomAbove || !roomBelow : !(roomBelow || !roomAbove)
+    const onTop = side === 'top' ? roomAbove || !roomBelow : !(roomBelow || !roomAbove)
 
-    const left = Math.min(
-      Math.max(8, a.left + a.width / 2 - b.width / 2),
-      window.innerWidth - b.width - 8,
-    )
-    const top = onTop ? a.top - b.height - GAP : a.bottom + GAP
-    setPos({ top, left, flipped: !onTop })
-  }, [side])
+    setPos({
+      top: onTop ? a.top - b.height - GAP : a.bottom + GAP,
+      left: Math.min(Math.max(8, a.left + a.width / 2 - b.width / 2), window.innerWidth - b.width - 8),
+    })
+  }, [anchor, side])
 
   useLayoutEffect(() => {
-    if (!open) return
+    if (!anchor) return
     place()
-    // Re-measure while open: a tooltip anchored inside a scrolling table has to
-    // follow its anchor or it detaches visually.
+    // Follow the anchor while open: one inside a scrolling panel would
+    // otherwise detach visually.
     window.addEventListener('scroll', place, true)
     window.addEventListener('resize', place)
     return () => {
       window.removeEventListener('scroll', place, true)
       window.removeEventListener('resize', place)
     }
-  }, [open, place])
+  }, [anchor, place])
 
-  const show = () => setOpen(true)
-  const hide = () => setOpen(false)
+  const hide = () => {
+    setAnchor(null)
+    setPos(OFFSCREEN)
+  }
 
-  const trigger = cloneElement(children, {
-    ref: anchor,
-    'aria-describedby': open ? id : undefined,
-    onPointerEnter: show,
+  const trigger = children({
+    'aria-describedby': anchor ? id : undefined,
+    onPointerEnter: (e) => setAnchor(e.currentTarget),
     onPointerLeave: hide,
-    onFocus: show,
+    onFocus: (e) => setAnchor(e.currentTarget),
     onBlur: hide,
-    onKeyDown: (e: React.KeyboardEvent) => {
+    onKeyDown: (e) => {
       if (e.key === 'Escape') hide()
     },
   })
@@ -89,7 +99,7 @@ export function Tooltip({
   return (
     <>
       {trigger}
-      {open
+      {anchor
         ? createPortal(
             <div
               id={id}

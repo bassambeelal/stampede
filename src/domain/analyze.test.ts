@@ -62,9 +62,15 @@ describe('the defaults-only chain', () => {
     expect(a.cumulative).toEqual([3, 9, 27, 81])
   })
 
-  it('reports each inherited retry layer separately', () => {
-    const a = analyze(defaultsOnlyChain())
-    expect(a.findings.filter((f) => f.ruleId === 'RB202')).toHaveLength(4)
+  it('reports the inherited retry layers as one finding naming all four', () => {
+    const found = analyze(defaultsOnlyChain()).findings.filter((f) => f.ruleId === 'RB202')
+    expect(found).toHaveLength(1)
+    expect(found[0]!.hopIds).toHaveLength(4)
+    expect(found[0]!.title).toBe('4 retry layers you never configured')
+    // Every inherited value's own source is cited.
+    expect(found[0]!.citations).toEqual(
+      expect.arrayContaining(['ingress-nginx-next-upstream-tries', 'istio-default-retry-policy', 'aws-max-attempts']),
+    )
   })
 
   it('passes a plain HTTP 500 straight through Istio’s default retryOn', () => {
@@ -238,3 +244,27 @@ function inverted(): Chain {
     { ...hop, timeoutMs: declared(5000), perTryTimeoutMs: declared(10_000) },
   ])
 }
+
+describe('consistency between the headline and the rules', () => {
+  it('never lets RB201 multiply attempts the deadlines make impossible', () => {
+    // Every hop is squeezed to one attempt when attempts time out, so the
+    // headline is 1x — and RB201 must not claim otherwise.
+    const place = { ...hopFromLayerId('istio-sidecar', 'h1', 'Place order'), totalTries: declared(4), timeoutMs: declared(3000), perTryTimeoutMs: declared(5000), retryOn: declared(['5xx']) }
+    const dotnet = hopFromLayerId('dotnet-standard-resilience', 'h2')
+    const a = analyze(chainOf([place, dotnet], { failureClass: 'attempt-timeout' }))
+    expect(a.amplification).toBe(1)
+    expect(a.findings.some((f) => f.ruleId === 'RB201')).toBe(false)
+    // The config problem is still reported, by the rules that own it.
+    expect(a.findings.some((f) => f.ruleId === 'RB101')).toBe(true)
+  })
+
+  it('agrees with the headline whenever RB201 fires', () => {
+    for (const cls of ['connect-failure', 'http-503', 'http-500', 'attempt-timeout', 'grpc-unavailable', 'http-429'] as const) {
+      const a = analyze({ ...defaultsOnlyChain(), failureClass: cls })
+      const f = a.findings.find((x) => x.ruleId === 'RB201')
+      if (!f) continue
+      const multiplying = a.facts.filter((x) => x.amplifyingTries > 1)
+      expect(f.hopIds).toEqual(multiplying.map((x) => x.hop.id))
+    }
+  })
+})

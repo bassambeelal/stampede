@@ -33,8 +33,11 @@ jobs:
           npm run lint
           npm run test -- --run
 
-      # `build` runs `tsc -b` first, so this also typechecks.
+      # `build` runs `tsc -b` first, so this also typechecks. Pages serves the
+      # site under /<repo>/, so assets need that prefix.
       - run: npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
 
       - uses: actions/configure-pages@v5
 

@@ -72,6 +72,7 @@ export const RB101: Rule = {
                   hopId: f.hop.id,
                   field: 'perTryTimeoutMs',
                   toValue: fmtMs(fit),
+                  raw: fit,
                   citationId: 'envoy-per-try-ignored',
                 }
               : {
@@ -143,6 +144,7 @@ export const RB102: Rule = {
                   hopId: f.hop.id,
                   field: 'perTryTimeoutMs',
                   toValue: fmtMs(fit),
+                  raw: fit,
                   citationId: 'envoy-per-try-ignored',
                 }
               : {

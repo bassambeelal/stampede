@@ -2,12 +2,39 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>product</title>
+    <title>Stampede — the retries you never configured</title>
+    <meta
+      name="description"
+      content="A retry and timeout linter for multi-hop request paths. Surfaces the retry layers your mesh, SDKs and libraries turn on by default, multiplies them out, and cites the vendor doc line behind every finding."
+    />
+    <meta property="og:title" content="Stampede — the retries you never configured" />
+    <meta
+      property="og:description"
+      content="Retry layers you inherited from Istio, AWS SDKs, .NET, urllib3 and more — multiplied out, with the doc line that proves each one."
+    />
+    <meta name="theme-color" content="#161a26" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f9fafc" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&family=JetBrains+Mono:wght@400..600&display=swap"
+    />
+    <script>
+      // Apply the stored theme before first paint so a light-mode visitor
+      // never sees a dark flash. Mirrors src/lib/useTheme.ts.
+      try {
+        var t = localStorage.getItem('theme')
+        var light = t === 'light' || (t !== 'dark' && matchMedia('(prefers-color-scheme: light)').matches)
+        if (light) document.documentElement.classList.add('theme-light')
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>Stampede analyses your retry configuration in the browser and needs JavaScript to run.</noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

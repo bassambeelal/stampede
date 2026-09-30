@@ -42,7 +42,8 @@ export interface BudgetAllowance {
 
 export interface LoadInput {
   readonly rps: number
-  readonly meanLatencyMs: number
+  /** Null when only throughput is known: rates still resolve, concurrency does not. */
+  readonly meanLatencyMs: number | null
 }
 
 /**
@@ -65,10 +66,12 @@ export function translateBudget(
   budget: RetryBudget,
   load: LoadInput | null,
 ): BudgetAllowance {
-  const latencySec = load ? load.meanLatencyMs / 1000 : null
-  const concurrency = load
-    ? concurrencyFromLoad(load.rps, load.meanLatencyMs)
-    : null
+  const latencySec =
+    load && load.meanLatencyMs !== null ? load.meanLatencyMs / 1000 : null
+  const concurrency =
+    load && load.meanLatencyMs !== null
+      ? concurrencyFromLoad(load.rps, load.meanLatencyMs)
+      : null
   const floor = budget.floor ?? 0
   const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1))
 

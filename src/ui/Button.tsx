@@ -16,10 +16,16 @@ const VARIANT: Record<Variant, string> = {
 }
 
 const SIZE: Record<Size, string> = {
-  sm: 'h-7 px-2.5 text-xs gap-1.5 rounded-sm',
-  md: 'h-9 px-3.5 text-sm gap-2 rounded-md',
-  lg: 'h-11 px-5 text-base gap-2 rounded-md',
+  sm: 'h-7 text-xs gap-1.5 rounded-sm',
+  md: 'h-9 text-sm gap-2 rounded-md',
+  lg: 'h-11 text-base gap-2 rounded-md',
 }
+
+// Padding and square sizing are separate maps so an icon-only button never
+// carries both: two conflicting padding utilities resolve by stylesheet order,
+// not by class order, and the loser silently squeezes the icon.
+const PAD: Record<Size, string> = { sm: 'px-2.5', md: 'px-3.5', lg: 'px-5' }
+const SQUARE: Record<Size, string> = { sm: 'w-7', md: 'w-9', lg: 'w-11' }
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
@@ -47,10 +53,10 @@ export function Button({
         'inline-flex shrink-0 items-center justify-center font-medium whitespace-nowrap',
         'transition-[background-color,border-color,color,filter,box-shadow] duration-150',
         'disabled:pointer-events-none disabled:opacity-45',
-        'motion-safe:active:translate-y-px',
+        'motion-safe:active:translate-y-px [&_svg]:shrink-0',
         SIZE[size],
+        iconOnly ? SQUARE[size] : PAD[size],
         VARIANT[variant],
-        iconOnly && (size === 'sm' ? 'w-7 px-0' : size === 'md' ? 'w-9 px-0' : 'w-11 px-0'),
         className,
       )}
       {...rest}

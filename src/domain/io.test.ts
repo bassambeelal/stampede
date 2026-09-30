@@ -158,7 +158,7 @@ describe('report', () => {
   it('leads with the path and headline and cites every finding', () => {
     const text = buildReport(analyze(defaultsOnlyChain()), 'https://example.test/#c=abc')
     expect(text).toMatch(/Path: Ingress → API service sidecar/)
-    expect(text).toMatch(/Worst-case amplification: 81x \(3 x 3 x 3 x 3\)/)
+    expect(text).toMatch(/Worst-case amplification: 81× \(3 × 3 × 3 × 3\)/)
     expect(text).toMatch(/\[RB201\]/)
     expect(text).toMatch(/Source: Istio/)
     expect(text).toMatch(/Open this analysis: https:\/\/example\.test/)

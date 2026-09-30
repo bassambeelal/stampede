@@ -18,22 +18,25 @@ export const RB201: Rule = {
     'Layered retries can be deliberate when each layer retries a disjoint failure class. Switch the failure class to check: this rule only counts hops that retry the selected one.',
   citations: ['aws-retry-one-level', 'sre-amplification-64'],
   run(a) {
-    const retrying = a.facts.filter((f) => f.effectiveTries > 1)
+    // The same per-hop factor the headline multiplies, so the two can never
+    // disagree: attempts a deadline makes impossible do not multiply anything.
+    const retrying = a.facts.filter((f) => f.amplifyingTries > 1)
     if (retrying.length < 2) return []
     const cls = failureClass(a.chain.failureClass)
-    const product = retrying.map((f) => f.effectiveTries).join(' x ')
+    const product = retrying.map((f) => f.amplifyingTries).join(' × ')
+    const total = retrying.reduce((n, f) => n * f.amplifyingTries, 1)
     const assumed = retrying.filter((f) => f.retryOnAssumed)
     return [
       finding(this, {
         hops: retrying,
         consequence:
           'Layered retries multiply rather than add. During an outage the innermost dependency receives the product of every layer’s attempts, at the moment it can least absorb them.',
-        detail: `${listNames(retrying.map((f) => f.hop.name))} all retry “${cls.label}”, so one failed request becomes ${product} = ${fmtX(retrying.reduce((n, f) => n * f.effectiveTries, 1))} calls at the innermost of them.${
+        detail: `${listNames(retrying.map((f) => f.hop.name))} all retry “${cls.label}”, so one failed request becomes ${product} = ${fmtX(total)} calls at the innermost of them.${
           assumed.length
             ? ` (${listNames(assumed.map((f) => f.hop.name))} ${assumed.length === 1 ? 'is' : 'are'} assumed to retry it because the retry conditions are unknown.)`
             : ''
         }`,
-        audit: retrying.map((f) => ({ label: f.hop.name, value: fmtTries(f.effectiveTries) })),
+        audit: retrying.map((f) => ({ label: f.hop.name, value: fmtTries(f.amplifyingTries) })),
         remedy: {
           kind: 'constraint',
           constraint:
@@ -47,43 +50,46 @@ export const RB201: Rule = {
 
 export const RB202: Rule = {
   id: 'RB202',
-  title: 'Retry layer you never configured',
+  title: 'Retry layers you never configured',
   severity: 'caution',
-  detects: 'A hop that retries only because its vendor’s default says so.',
+  detects: 'Hops that retry only because their vendor’s default says so.',
   falsePositives:
-    'If you have overridden this default somewhere the tool cannot see (MeshConfig, an environment variable, a shared client factory), declare the real value on the hop.',
+    'If you have overridden a default somewhere the tool cannot see (MeshConfig, an environment variable, a shared client factory), declare the real value on the hop.',
   citations: [],
   run(a) {
-    const out: Finding[] = []
-    for (const f of a.facts) {
-      if (f.hop.totalTries.state !== 'inherited') continue
-      if (f.effectiveTries < 2) continue
-      const tries = f.hop.totalTries
-      const cites: CitationId[] = [tries.citationId]
-      if (f.hop.retryOn.state === 'inherited' && f.hop.retryOn.citationId !== tries.citationId) {
-        cites.push(f.hop.retryOn.citationId)
-      }
-      const applies = f.layer?.defaults.totalTries?.appliesWhen
-      out.push(
-        finding(this, {
-          hops: [f],
-          citations: cites,
-          consequence:
-            'Engineers reason about the retries they wrote. This one was switched on by a default, so it is in nobody’s review and in nobody’s mental model of the system.',
-          detail: `${f.hop.name}: ${f.layer?.product ?? 'this layer'} makes ${fmtTries(f.totalTries)} here without any retry setting being written.${applies ? ` Applies when: ${applies}` : ''}`,
-          audit: [
-            { label: 'Source', value: `${f.layer?.product ?? 'vendor'} default` },
-            { label: 'Normalised', value: fmtTries(f.totalTries) },
-          ],
-          remedy: {
-            kind: 'constraint',
-            constraint: `Write ${f.hop.name}'s retry policy into its configuration explicitly — keep it or turn it off, but make it a decision that shows up in review.`,
-            noAuthoritativeDefault: true,
-          },
-        }),
-      )
+    const inherited = a.facts.filter(
+      (f) => f.hop.totalTries.state === 'inherited' && f.effectiveTries > 1,
+    )
+    if (inherited.length === 0) return []
+
+    const cites = new Set<CitationId>()
+    for (const f of inherited) {
+      if (f.hop.totalTries.state === 'inherited') cites.add(f.hop.totalTries.citationId)
+      if (f.hop.retryOn.state === 'inherited') cites.add(f.hop.retryOn.citationId)
     }
-    return out
+    const product = inherited.reduce((n, f) => n * f.effectiveTries, 1)
+    const one = inherited.length === 1
+    return [
+      finding(this, {
+        title: one ? 'Retry layer you never configured' : `${inherited.length} retry layers you never configured`,
+        hops: inherited,
+        citations: [...cites],
+        consequence:
+          'Engineers reason about the retries they wrote. These were switched on by defaults, so they are in nobody’s review and nobody’s mental model of the system.',
+        detail: `${listNames(inherited.map((f) => `${f.hop.name} (${f.layer?.product ?? 'vendor'}, ${f.totalTries} calls)`))} ${one ? 'retries' : 'retry'} without a single retry setting being written${one ? '' : ` — ${fmtX(product)} between them`}.`,
+        audit: inherited.map((f) => ({
+          label: f.hop.name,
+          value: `${f.layer?.product ?? 'vendor'} default: ${fmtTries(f.totalTries)}`,
+          workings: f.layer?.defaults.totalTries?.appliesWhen,
+        })),
+        remedy: {
+          kind: 'constraint',
+          constraint:
+            'Write each layer’s retry policy into its configuration explicitly — keep it or turn it off, but make it a decision that shows up in review.',
+          noAuthoritativeDefault: true,
+        },
+      }),
+    ]
   },
 }
 
@@ -113,6 +119,7 @@ export const RB203: Rule = {
             hopId: f.hop.id,
             field: 'totalTries',
             toValue: '3 calls (1 + 2 retries)',
+            raw: 3,
             citationId: 'sre-per-request-budget',
           },
         }),

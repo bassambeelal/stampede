@@ -100,3 +100,20 @@ describe('unitsAgree', () => {
     ).toBe(true)
   })
 })
+
+describe('translateBudget with throughput but no latency', () => {
+  it('still resolves rate budgets and refuses the concurrency conversion', () => {
+    const a = translateBudget({ kind: 'rate-ratio', value: 0.2, floor: 10 }, { rps: 100, meanLatencyMs: null })
+    expect(a.native).toBeCloseTo(20, 12)
+    expect(a.asConcurrentRetries).toBeNull()
+  })
+
+  it('falls back to Envoy’s floor rather than producing NaN', () => {
+    const a = translateBudget(
+      { kind: 'envoy-concurrency-pct', value: 20, floor: 3 },
+      { rps: 100, meanLatencyMs: null },
+    )
+    expect(a.native).toBe(3)
+    expect(Number.isNaN(a.native)).toBe(false)
+  })
+})

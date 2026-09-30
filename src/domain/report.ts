@@ -15,7 +15,7 @@ export function buildReport(a: Analysis, permalink?: string): string {
   const lines: string[] = []
   const cls = failureClass(a.chain.failureClass)
   const path = a.facts.map((f) => f.hop.name).join(' → ') || '(empty)'
-  const factors = a.facts.map((f) => f.amplifyingTries).join(' x ')
+  const factors = a.facts.map((f) => f.amplifyingTries).join(' × ')
 
   lines.push('## Stampede — retry and timeout lint')
   lines.push('')
@@ -24,7 +24,7 @@ export function buildReport(a: Analysis, permalink?: string): string {
   lines.push(
     `Worst-case amplification: ${a.qualifier === 'at-least' ? 'at least ' : ''}${fmtX(a.amplification)}${a.facts.length > 1 ? ` (${factors})` : ''} — an upper bound assuming every attempt fails and nothing sheds load`,
   )
-  lines.push(`Worst-case wait for the user: ${fmtMs(a.userLatencyMs)}`)
+  lines.push(`Longest the user can wait: ${fmtMs(a.userLatencyMs)}`)
 
   const fails = a.findings.filter((f) => f.verdict === 'fail')
   const context = a.findings.filter((f) => f.verdict === 'needs-context')

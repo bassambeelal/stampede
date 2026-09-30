@@ -52,7 +52,7 @@ export function SegmentedControl<T extends string>({
             className={cx(
               'relative inline-flex cursor-pointer items-center justify-center rounded-sm font-medium',
               'transition-[background-color,color,box-shadow] duration-150',
-              'focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent',
+              'has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-accent',
               pad,
               selected
                 ? 'bg-raised text-ink shadow-e1'

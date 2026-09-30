@@ -254,8 +254,11 @@ export type Remedy =
   | {
       readonly kind: 'set-field'
       readonly hopId: string
-      readonly field: string
+      readonly field: 'perTryTimeoutMs' | 'totalTries' | 'backoff' | 'backoff.jitter'
+      /** Human-readable target value. */
       readonly toValue: string
+      /** Machine value the UI applies when the user tries the fix. */
+      readonly raw: number | string
       readonly citationId: CitationId
     }
   | {
