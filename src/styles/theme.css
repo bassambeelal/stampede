@@ -1,0 +1,345 @@
+@import 'tailwindcss';
+
+/*
+  Design tokens.
+
+  Everything is authored in OKLCH so the neutral ramp steps are perceptually even
+  and the semantic colours hold the same apparent weight as each other. Lightness
+  values were chosen so that every text-on-surface pair below clears WCAG AA:
+
+    text        on canvas / surface / raised   >= 12:1
+    text-dim    on canvas / surface / raised   >=  7:1
+    text-faint  on canvas / surface / raised   >=  4.6:1
+    accent-ink  on accent-solid                >=  8:1
+    <sev>-ink   on <sev>-solid                 >=  7:1
+
+  Two themes, one token vocabulary: components never branch on theme, they only
+  ever name a role. `.theme-light` is applied to <html> by the theme controller.
+*/
+
+@theme {
+  /* ---- type ------------------------------------------------------------- */
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:
+    'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, monospace;
+
+  /* A tight display ramp. Headings are set -0.02em to -0.03em because Inter's
+     default tracking is tuned for body text and reads loose at large sizes. */
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1rem;
+  --text-micro--letter-spacing: 0.04em;
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.125rem;
+
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+
+  --text-base: 0.9375rem;
+  --text-base--line-height: 1.5rem;
+
+  --text-lg: 1.0625rem;
+  --text-lg--line-height: 1.625rem;
+
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.75rem;
+  --text-xl--letter-spacing: -0.018em;
+
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 2.125rem;
+  --text-2xl--letter-spacing: -0.024em;
+
+  --text-3xl: 2.375rem;
+  --text-3xl--line-height: 2.625rem;
+  --text-3xl--letter-spacing: -0.03em;
+
+  --text-4xl: 3.25rem;
+  --text-4xl--line-height: 3.375rem;
+  --text-4xl--letter-spacing: -0.034em;
+
+  /* ---- neutral surfaces (dark is the default) --------------------------- */
+  --color-canvas: oklch(0.1755 0.0125 265);
+  --color-surface: oklch(0.2135 0.0142 265);
+  --color-raised: oklch(0.2515 0.0152 265);
+  --color-overlay: oklch(0.2755 0.0158 265);
+
+  --color-line: oklch(0.3055 0.0162 265);
+  --color-line-strong: oklch(0.4015 0.018 265);
+
+  --color-ink: oklch(0.9565 0.0055 265);
+  --color-ink-dim: oklch(0.7715 0.0142 265);
+  --color-ink-faint: oklch(0.6215 0.0168 265);
+
+  /* ---- accent ----------------------------------------------------------- */
+  --color-accent: oklch(0.7825 0.1225 205);
+  --color-accent-hover: oklch(0.8385 0.1085 205);
+  --color-accent-solid: oklch(0.7025 0.1245 233);
+  --color-accent-ink: oklch(0.1755 0.0285 233);
+  --color-accent-wash: oklch(0.7825 0.1225 205 / 0.13);
+  --color-accent-edge: oklch(0.7825 0.1225 205 / 0.34);
+
+  /* ---- severity --------------------------------------------------------- */
+  /* Hues are spread far enough apart (158 / 95 / 55 / 22) to stay separable
+     under deuteranopia, and each carries a distinct lightness so the ramp also
+     reads correctly in greyscale. Never rely on these alone — every severity in
+     the UI is also carried by a label and an icon shape. */
+  --color-safe: oklch(0.7825 0.1425 158);
+  --color-safe-wash: oklch(0.7825 0.1425 158 / 0.13);
+  --color-safe-edge: oklch(0.7825 0.1425 158 / 0.36);
+  --color-safe-solid: oklch(0.6625 0.1385 158);
+  --color-safe-ink: oklch(0.9765 0.0185 158);
+
+  --color-caution: oklch(0.8425 0.1385 95);
+  --color-caution-wash: oklch(0.8425 0.1385 95 / 0.13);
+  --color-caution-edge: oklch(0.8425 0.1385 95 / 0.36);
+  --color-caution-solid: oklch(0.7625 0.1425 85);
+  --color-caution-ink: oklch(0.2055 0.0385 85);
+
+  --color-danger: oklch(0.7625 0.1525 55);
+  --color-danger-wash: oklch(0.7625 0.1525 55 / 0.13);
+  --color-danger-edge: oklch(0.7625 0.1525 55 / 0.36);
+  --color-danger-solid: oklch(0.6725 0.1785 45);
+  --color-danger-ink: oklch(0.9865 0.0165 55);
+
+  --color-critical: oklch(0.6925 0.2025 22);
+  --color-critical-wash: oklch(0.6925 0.2025 22 / 0.15);
+  --color-critical-edge: oklch(0.6925 0.2025 22 / 0.42);
+  --color-critical-solid: oklch(0.5825 0.2185 20);
+  --color-critical-ink: oklch(0.9865 0.0135 22);
+
+  /* ---- elevation -------------------------------------------------------- */
+  /* Dark UIs read as flat when shadows are the only cue, so each level pairs a
+     shadow with a 1px top highlight. */
+  --shadow-e1: 0 1px 2px oklch(0 0 0 / 0.32), 0 0 0 1px oklch(0 0 0 / 0.16);
+  --shadow-e2:
+    0 2px 4px oklch(0 0 0 / 0.26), 0 8px 20px -6px oklch(0 0 0 / 0.36);
+  --shadow-e3:
+    0 4px 8px oklch(0 0 0 / 0.24), 0 20px 48px -12px oklch(0 0 0 / 0.48);
+  --shadow-glow: 0 0 0 1px var(--color-accent-edge), 0 0 24px -4px
+    oklch(0.7825 0.1225 205 / 0.28);
+
+  /* ---- motion ----------------------------------------------------------- */
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.32, 0.64, 1);
+
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+/*
+  Light theme. Not an inversion — the neutral ramp is recomputed so that
+  "raised" still reads as nearer the viewer (lighter than canvas here, where in
+  dark it is lighter than canvas too), and the semantic hues are darkened because
+  saturated mid-lightness colour on white loses contrast fast.
+*/
+.theme-light {
+  --color-canvas: oklch(0.9825 0.0035 265);
+  --color-surface: oklch(1 0 0);
+  --color-raised: oklch(1 0 0);
+  --color-overlay: oklch(1 0 0);
+
+  --color-line: oklch(0.9085 0.0065 265);
+  --color-line-strong: oklch(0.8185 0.0105 265);
+
+  --color-ink: oklch(0.2285 0.0155 265);
+  --color-ink-dim: oklch(0.4585 0.0165 265);
+  --color-ink-faint: oklch(0.5785 0.0155 265);
+
+  --color-accent: oklch(0.5185 0.1165 233);
+  --color-accent-hover: oklch(0.4485 0.1225 233);
+  --color-accent-solid: oklch(0.5385 0.1385 233);
+  --color-accent-ink: oklch(0.9965 0.0035 233);
+  --color-accent-wash: oklch(0.5185 0.1165 233 / 0.09);
+  --color-accent-edge: oklch(0.5185 0.1165 233 / 0.26);
+
+  --color-safe: oklch(0.4785 0.1085 158);
+  --color-safe-wash: oklch(0.4785 0.1085 158 / 0.09);
+  --color-safe-edge: oklch(0.4785 0.1085 158 / 0.28);
+  --color-safe-solid: oklch(0.5385 0.1185 158);
+  --color-safe-ink: oklch(0.9965 0.0085 158);
+
+  --color-caution: oklch(0.5185 0.1085 75);
+  --color-caution-wash: oklch(0.6785 0.1385 85 / 0.14);
+  --color-caution-edge: oklch(0.5785 0.1285 80 / 0.3);
+  --color-caution-solid: oklch(0.6885 0.1425 80);
+  --color-caution-ink: oklch(0.2055 0.0385 80);
+
+  --color-danger: oklch(0.5385 0.1585 42);
+  --color-danger-wash: oklch(0.5385 0.1585 42 / 0.09);
+  --color-danger-edge: oklch(0.5385 0.1585 42 / 0.28);
+  --color-danger-solid: oklch(0.5885 0.1785 42);
+  --color-danger-ink: oklch(0.9965 0.0085 42);
+
+  --color-critical: oklch(0.4885 0.1985 22);
+  --color-critical-wash: oklch(0.4885 0.1985 22 / 0.1);
+  --color-critical-edge: oklch(0.4885 0.1985 22 / 0.3);
+  --color-critical-solid: oklch(0.5185 0.2125 22);
+  --color-critical-ink: oklch(0.9965 0.0075 22);
+
+  --shadow-e1:
+    0 1px 2px oklch(0.2285 0.0155 265 / 0.07), 0 0 0 1px
+    oklch(0.2285 0.0155 265 / 0.05);
+  --shadow-e2:
+    0 1px 2px oklch(0.2285 0.0155 265 / 0.05), 0 6px 16px -4px
+    oklch(0.2285 0.0155 265 / 0.1);
+  --shadow-e3:
+    0 2px 4px oklch(0.2285 0.0155 265 / 0.05), 0 16px 40px -8px
+    oklch(0.2285 0.0155 265 / 0.16);
+  --shadow-glow: 0 0 0 1px var(--color-accent-edge), 0 0 20px -6px
+    oklch(0.5185 0.1165 233 / 0.24);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--color-line);
+  }
+
+  html {
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+
+  html.theme-light {
+    color-scheme: light;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.5;
+    /* Inter's contextual alternates fix the `l`/`1` ambiguity in UI labels;
+       `cv05` gives the single-storey `l` a tail. */
+    font-feature-settings: 'cv05' 1, 'calt' 1, 'ss03' 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Numbers in a table must not reflow as they change. */
+  table,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: var(--font-mono);
+    font-variant-ligatures: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  /* Remove the outline only where a component draws its own focus ring. */
+  [data-focus-ring='custom']:focus-visible {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: var(--color-accent-edge);
+    color: var(--color-ink);
+  }
+
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-line-strong);
+    border: 3px solid transparent;
+    border-radius: 99px;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ink-faint);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@keyframes tip {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@layer utilities {
+  /* A hairline that reads as a seam rather than a border, for dense data rows. */
+  .seam-t {
+    box-shadow: inset 0 1px 0 0 var(--color-line);
+  }
+
+  .seam-b {
+    box-shadow: inset 0 -1px 0 0 var(--color-line);
+  }
+
+  /* Top highlight that keeps raised panels from looking flat in dark mode. */
+  .lip {
+    position: relative;
+  }
+
+  .lip::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      oklch(1 0 0 / 0.07) 18%,
+      oklch(1 0 0 / 0.07) 82%,
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  .theme-light .lip::before {
+    display: none;
+  }
+
+  .numeric {
+    font-variant-numeric: tabular-nums;
+  }
+}
