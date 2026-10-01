@@ -422,6 +422,16 @@ const list: Citation[] = [
     retrieved: RETRIEVED,
   },
   {
+    id: 'msext-handled-outcomes',
+    product: 'Microsoft.Extensions.Http.Resilience',
+    title: 'Standard resilience handler — handled outcomes',
+    url: MS_RESILIENCE,
+    quote:
+      'The retry and circuit breaker strategies both handle a set of specific HTTP status codes and exceptions. Consider the following HTTP status codes: HTTP 500 and above (Server errors) | HTTP 408 (Request timeout) | HTTP 429 (Too many requests) … Additionally, these strategies handle the following exceptions: HttpRequestException | TimeoutRejectedException',
+    docVersion: 'learn.microsoft.com, .NET 8+ (page dated 2026-02-24)',
+    retrieved: RETRIEVED,
+  },
+  {
     id: 'msext-all-methods',
     product: 'Microsoft.Extensions.Http.Resilience',
     title: 'Standard resilience handler — retried methods',

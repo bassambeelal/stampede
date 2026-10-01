@@ -76,7 +76,7 @@ export function BudgetTranslator({
         />
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Retry budgets compared">
         <table className="w-full min-w-[36rem] text-sm">
           <thead>
             <tr className="text-left text-xs text-ink-faint">

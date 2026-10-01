@@ -212,7 +212,9 @@ export const RB104: Rule = {
   citations: ['grpc-no-default-deadline', 'istio-route-timeout'],
   run(a) {
     if (a.facts.length === 0 || Number.isFinite(a.userLatencyMs)) return []
-    const unknownTimeouts = a.facts.filter((f) => !f.timeoutKnown || !f.perTryKnown)
+    const unknownTimeouts = a.facts.filter(
+      (f) => !f.timeoutKnown || (f.totalTries > 1 && !f.perTryKnown),
+    )
     if (unknownTimeouts.length > 0) {
       return [
         finding(this, {

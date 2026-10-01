@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import {
   declared,
   type Backoff,
@@ -162,6 +162,9 @@ export function NumberInput({
   className?: string
   ariaLabel?: string
 }) {
+  // While focused the field shows what was typed, so it can be cleared and
+  // retyped; only valid numbers are committed, and blur snaps back to the value.
+  const [draft, setDraft] = useState<string | null>(null)
   return (
     <div className={cx('relative', className)}>
       <input
@@ -169,14 +172,16 @@ export function NumberInput({
         type="number"
         inputMode="decimal"
         aria-label={ariaLabel}
-        value={Number.isFinite(value) ? value : ''}
+        value={draft ?? (Number.isFinite(value) ? String(value) : '')}
         min={min}
         max={max}
         step={step}
         onChange={(e) => {
+          setDraft(e.currentTarget.value)
           const n = e.currentTarget.valueAsNumber
           if (Number.isFinite(n)) onChange(Math.max(min, max === undefined ? n : Math.min(max, n)))
         }}
+        onBlur={() => setDraft(null)}
         className={cx(inputBase, 'w-full', suffix && 'pr-9')}
         data-numeric
       />
@@ -245,6 +250,9 @@ export function TokensInput({
 }) {
   return (
     <input
+      // Committed on blur; keyed by the value so external changes (undo,
+      // import) replace what is shown instead of leaving stale text.
+      key={value.join(',')}
       id={id}
       type="text"
       spellCheck={false}
@@ -396,7 +404,7 @@ export function BudgetEditor({
         <div className="grid grid-cols-2 gap-2">
           <Labeled text={ratio ? 'Ratio' : 'Percent'}>
             <NumberInput
-              value={ratio ? value.value * 100 : value.value}
+              value={ratio ? Number((value.value * 100).toFixed(4)) : value.value}
               onChange={(v) => onChange({ ...value, value: ratio ? v / 100 : v })}
               max={100}
               suffix="%"

@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, ChevronDown, Trash2 } from 'lucide-react'
 import { useId, useState } from 'react'
 import type { HopFacts } from '../domain/analyze'
-import { fmtMs, fmtTries } from '../domain/format'
+import { fmtMs, fmtPct, fmtTries } from '../domain/format'
 import { inheritedValue } from '../domain/hops'
 import {
   declared,
@@ -171,6 +171,9 @@ function HopEditor({ facts: f, onChange }: { facts: HopFacts; onChange: (patch: 
           Name
         </label>
         <input
+          // Uncontrolled so typing does not re-run the analysis per keystroke;
+          // keyed by the value so an undo or import shows the real name.
+          key={hop.name}
           id={nameId}
           type="text"
           maxLength={60}
@@ -305,7 +308,11 @@ function HopEditor({ facts: f, onChange }: { facts: HopFacts; onChange: (patch: 
             inheritedDefault={inheritedValue(hop, 'budget')}
             onChange={(budget) => onChange({ budget })}
             seed={null}
-            display={(v) => (v ? `${v.kind === 'rate-ratio' ? `${v.value * 100}%` : `${v.value}%`} (${v.kind === 'envoy-concurrency-pct' ? 'of in-flight' : 'of requests'})` : 'None')}
+            display={(v) =>
+              v
+                ? `${v.kind === 'rate-ratio' ? fmtPct(v.value) : `${v.value}%`} ${v.kind === 'envoy-concurrency-pct' ? 'of in-flight' : 'of requests'}${v.floor ? `, floor ${v.floor}` : ''}`
+                : 'None'
+            }
             editor={(v, set, id) => <BudgetEditor id={id} value={v} onChange={set} />}
             unknownMeans="Unknown whether anything caps retries here."
           />

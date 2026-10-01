@@ -31,7 +31,8 @@ export function FanoutDiagram({
         hint={`Each dot is one call when every attempt fails with “${cls.label}”.`}
         actions={<Legend />}
       />
-      <div className="overflow-x-auto">
+      {/* Focusable so keyboard users can scroll it when the path is wider than the screen. */}
+      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Fan-out diagram">
         <ol
           className="flex w-full min-w-max items-stretch px-4 py-5 sm:px-5"
           aria-label={`Calls per hop: ${a.facts.map((f, i) => `${f.hop.name} makes ${a.cumulative[i]}`).join(', ')}`}

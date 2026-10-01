@@ -268,3 +268,16 @@ describe('consistency between the headline and the rules', () => {
     }
   })
 })
+
+describe('the .NET handler’s retried outcomes', () => {
+  it('retries 429s, as Microsoft documents, so it is not reported as passing them through', () => {
+    const a = analyze(chainOf([hopFromLayerId('dotnet-standard-resilience', 'h1')], { failureClass: 'http-429' }))
+    expect(a.facts[0]!.retriesThisClass).toBe(true)
+    expect(a.amplification).toBe(4)
+  })
+
+  it('treats its HttpRequestException handling as retrying refused connections', () => {
+    const a = analyze(chainOf([hopFromLayerId('dotnet-standard-resilience', 'h1')], { failureClass: 'connect-failure' }))
+    expect(a.facts[0]!.retriesThisClass).toBe(true)
+  })
+})

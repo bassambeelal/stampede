@@ -62,7 +62,7 @@ A linter is only useful if it is trusted, so the model's limits are part of the 
 | RB302 | Backoff without jitter | caution |
 | RB303 | Retrying work that is not safe to repeat | critical |
 
-The in-app rule reference lists what each rule detects, when it is wrong, and its sources. All 60 sources are browsable from the app.
+The in-app rule reference lists what each rule detects, when it is wrong, and its sources. All 61 sources are browsable from the app.
 
 ## Running it locally
 
@@ -74,7 +74,7 @@ npm run dev
 ```
 
 ```bash
-npm test -- --run  # 111 unit tests over the math, rules, importer and permalinks
+npm test -- --run  # 113 unit tests over the math, rules, importer and permalinks
 npm run lint
 npm run build     # typechecks, then builds to dist/
 ```

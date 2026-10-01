@@ -24,6 +24,7 @@ export const FAILURE_CLASSES: readonly FailureClass[] = [
       'error',
       'connect',
       'transient',
+      'httprequestexception',
       'any',
     ],
   },
@@ -43,7 +44,7 @@ export const FAILURE_CLASSES: readonly FailureClass[] = [
     id: 'attempt-timeout',
     label: 'Attempt timed out',
     note: 'The dependency is slow rather than down — the classic brownout.',
-    matchedBy: ['5xx', 'gateway-error', 'timeout', 'read', 'transient', 'any'],
+    matchedBy: ['5xx', 'gateway-error', 'timeout', 'read', 'transient', 'timeoutrejectedexception', 'any'],
   },
   {
     id: 'grpc-unavailable',

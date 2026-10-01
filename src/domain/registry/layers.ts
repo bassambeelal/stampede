@@ -167,7 +167,10 @@ export const LAYERS: readonly LayerKind[] = [
         citationId: 'msext-retry',
         appliesWhen: 'Polly applies its own jitter curve; the worst case is modelled at the unjittered exponential.',
       },
-      retryOn: { value: ['transient'], citationId: 'msext-retry' },
+      retryOn: {
+        value: ['5xx', '408', '429', 'HttpRequestException', 'TimeoutRejectedException'],
+        citationId: 'msext-handled-outcomes',
+      },
       idempotent: {
         value: false,
         citationId: 'msext-all-methods',
